@@ -10,7 +10,13 @@ function TodoList({ user, isDarkMode }) {
 
   const [todos, setTodos] = useState([]);
   const [inputValue, setInputValue] = useState("");
+  const [crashError, setCrashError] = useState(null);
   const { triggerFailure } = useContext(ChaosContext);
+
+  // 如果被標記為崩潰，就直接丟出錯誤，讓 ErrorBoundary 捕捉
+  if (crashError) {
+    throw crashError;
+  }
 
   // 定義深色/淺色主題樣式
   const theme = {
@@ -64,7 +70,15 @@ function TodoList({ user, isDarkMode }) {
       return;
     }
 
-    if (triggerFailure()) return;
+    const failureInjected = triggerFailure();
+    if (failureInjected) {
+      // Chaos Monkey 觸發失敗，50% 機率讓整個 UI 崩潰
+      if (Math.random() > 0.5) {
+        setCrashError(new Error("Chaos Monkey Critical Hit!"));
+      }
+      // 無論是否觸發崩潰，這次操作都視為失敗，不繼續執行
+      return;
+    }
 
     try {
       // 2. 執行 Firestore 寫入
@@ -94,7 +108,15 @@ function TodoList({ user, isDarkMode }) {
   const handleDelete = async (id) => {
     if (!user) return;
 
-    if (triggerFailure()) return;
+    const failureInjected = triggerFailure();
+    if (failureInjected) {
+      // Chaos Monkey 觸發失敗，50% 機率讓整個 UI 崩潰
+      if (Math.random() > 0.5) {
+        setCrashError(new Error("Chaos Monkey Critical Hit!"));
+      }
+      // 無論是否觸發崩潰，這次操作都視為失敗，不繼續執行
+      return;
+    }
 
     try {
       // 1. 執行刪除
